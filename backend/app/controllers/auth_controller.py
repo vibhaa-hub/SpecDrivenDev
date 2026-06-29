@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.user import User
-from ..schemas.user import UserCreate, UserResponse
+from ..schemas.user import UserCreate, UserLogin, UserResponse
 from ..schemas.token import Token
 from ..schemas.auth import PasswordResetRequest, PasswordResetConfirm
 from ..schemas.profile import UserUpdate, PasswordChange
@@ -45,7 +45,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 @router.post("/login", response_model=Token)
-def login(user_credentials: UserCreate, db: Session = Depends(get_db)):
+def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == user_credentials.email).first()
     if not user or not verify_password(user_credentials.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
