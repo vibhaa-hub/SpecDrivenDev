@@ -1,8 +1,8 @@
-from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional
 import os
+import bcrypt
 
 # Configuration
 SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-key-for-dev-only")
@@ -10,13 +10,17 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    # Use bcrypt with a work factor/rounds of 12
+    salt = bcrypt.gensalt(rounds=12)
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+    except Exception:
+        return False
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
